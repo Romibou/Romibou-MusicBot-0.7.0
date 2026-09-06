@@ -1,23 +1,7 @@
 #!/bin/sh
 set -eu
 
-# --- Render port binding -----------------------------------------------
-PORT="${PORT:-10000}"
-socat TCP-LISTEN:"$PORT",bind=0.0.0.0,fork,reuseaddr \
-    SYSTEM:'printf "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK"' \
-    >/tmp/socat.log 2>&1 &
-SOCAT_PID=$!
-sleep 2
-if echo -n "" | socat -T2 - TCP:127.0.0.1:"$PORT" >/tmp/socat_test.log 2>&1; then
-  echo "[INFO] HTTP keep-alive responder CONFIRMED listening on 0.0.0.0:$PORT (pid $SOCAT_PID)"
-else
-  echo "[WARN] HTTP keep-alive responder NOT reachable on port $PORT (pid $SOCAT_PID may be a zombie)"
-  echo "[WARN] --- socat startup log ---"
-  cat /tmp/socat.log 2>/dev/null || echo "[WARN] (empty)"
-  echo "[WARN] --- connection test output ---"
-  cat /tmp/socat_test.log 2>/dev/null || echo "[WARN] (empty)"
-fi
-# -------------------------------------------------------------------------
+
 
 JAR="/app/app.jar"
 
