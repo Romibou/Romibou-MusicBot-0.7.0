@@ -34,7 +34,6 @@ Dockerfile
 .dockerignore
 
 # User-specific config files
-config.txt
 serversettings.json
 *.json
 
