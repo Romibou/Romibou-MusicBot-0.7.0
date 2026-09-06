@@ -13,6 +13,14 @@ PORT="${PORT:-10000}"
 echo "[INFO] HTTP keep-alive responder listening on port $PORT"
 # -------------------------------------------------------------------------
 
+# --- Render secret file -------------------------------------------------
+if [ -f /etc/secrets/config.txt ]; then
+  cp /etc/secrets/config.txt /musicbot/config.txt
+  echo "[INFO] Loaded config.txt from Render secret file"
+fi
+# -------------------------------------------------------------------------
+
+
 JAR="/app/app.jar"
 
 if [ ! -f "$JAR" ]; then
