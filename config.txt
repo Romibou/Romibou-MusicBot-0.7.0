@@ -18,12 +18,12 @@ discord {
   # This sets the token for the bot to log in with
   # This MUST be a bot token (user tokens will not work)
   # Guide: https://github.com/jagrosh/MusicBot/wiki/Getting-a-Bot-Token
-  token = ${?DISCORD_TOKEN}
+  token = "MTA3MTQ0NDczNzkzODE2NTgwMQ.GaRG-8.QW-QckbS7K0jhLUtdcqseg9LYEhf3hWtpiWZII"
 
   # This sets the owner of the bot
   # This needs to be the owner's ID (a 17-18 digit number)
   # Guide: https://github.com/jagrosh/MusicBot/wiki/Finding-Your-User-ID
-  owner = ${?DISCORD_OWNER}
+  owner = 760182467361243186
 }
 
 playback {
