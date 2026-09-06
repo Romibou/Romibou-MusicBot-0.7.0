@@ -2,21 +2,20 @@
 set -eu
 
 # --- Render port binding -----------------------------------------------
-# Render's free Web Service tier requires the container to answer on a
-# port, and puts it to sleep otherwise. This tiny responder (paired with
-# UptimeRobot pinging the Render URL every 5 min) keeps the bot alive
-# without needing any changes to the Java code.
 PORT="${PORT:-10000}"
 socat TCP-LISTEN:"$PORT",bind=0.0.0.0,fork,reuseaddr \
     SYSTEM:'printf "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK"' \
     >/tmp/socat.log 2>&1 &
 SOCAT_PID=$!
-sleep 1
-if kill -0 "$SOCAT_PID" 2>/dev/null; then
-  echo "[INFO] HTTP keep-alive responder running (pid $SOCAT_PID) on 0.0.0.0:$PORT"
+sleep 2
+if echo -n "" | socat -T2 - TCP:127.0.0.1:"$PORT" >/tmp/socat_test.log 2>&1; then
+  echo "[INFO] HTTP keep-alive responder CONFIRMED listening on 0.0.0.0:$PORT (pid $SOCAT_PID)"
 else
-  echo "[WARN] HTTP keep-alive responder failed to start, see below:"
-  cat /tmp/socat.log 2>/dev/null || echo "[WARN] (no socat log output)"
+  echo "[WARN] HTTP keep-alive responder NOT reachable on port $PORT (pid $SOCAT_PID may be a zombie)"
+  echo "[WARN] --- socat startup log ---"
+  cat /tmp/socat.log 2>/dev/null || echo "[WARN] (empty)"
+  echo "[WARN] --- connection test output ---"
+  cat /tmp/socat_test.log 2>/dev/null || echo "[WARN] (empty)"
 fi
 # -------------------------------------------------------------------------
 
