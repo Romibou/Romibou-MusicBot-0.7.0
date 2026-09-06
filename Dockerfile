@@ -49,7 +49,7 @@ FROM eclipse-temurin:25-jdk-noble AS jre-builder
 #   jdk.management    - JMX management extensions
 #   jdk.unsupported   - Native library access (jdave, udpqueue)
 RUN $JAVA_HOME/bin/jlink \
-    --add-modules java.base,java.compiler,java.desktop,java.logging,java.naming,java.net.http,java.scripting,java.security.jgss,java.sql,jdk.crypto.ec,jdk.management,jdk.unsupported \
+    --add-modules java.base,java.compiler,java.desktop,java.logging,java.naming,java.net.http,java.scripting,java.security.jgss,java.sql,jdk.crypto.ec,jdk.httpserver,jdk.management,jdk.unsupported \
     --strip-debug \
     --no-man-pages \
     --no-header-files \
