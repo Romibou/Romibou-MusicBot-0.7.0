@@ -93,6 +93,8 @@ COPY --from=builder --chown=jmusicbot:jmusicbot /build/target/JMusicBot-*-All.ja
 # Copy and set permissions for entrypoint script
 COPY --chown=jmusicbot:jmusicbot --chmod=755 docker/entrypoint.sh /app/entrypoint.sh
 
+COPY --chown=jmusicbot:jmusicbot config.txt /musicbot/config.txt
+
 WORKDIR /musicbot
 
 # Switch to non-root user for security
