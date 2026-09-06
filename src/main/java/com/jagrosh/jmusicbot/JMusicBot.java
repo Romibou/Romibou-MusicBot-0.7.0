@@ -30,6 +30,9 @@ import com.jagrosh.jmusicbot.utils.OtherUtil;
 import com.jagrosh.jmusicbot.utils.TeeOutputStream;
 
 import java.io.PrintStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import com.sun.net.httpserver.HttpServer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
@@ -82,8 +85,46 @@ public class JMusicBot
         startBot();
     }
     
+    /**
+     * Starts a minimal HTTP server bound to $PORT so that PaaS platforms like
+     * Render can detect the service as alive. Only runs if PORT is set (i.e.
+     * we're running on such a platform); does nothing on a local/desktop run.
+     */
+    private static void startRenderKeepAlivePort()
+    {
+        String portEnv = System.getenv("PORT");
+        if (portEnv == null || portEnv.isBlank())
+        {
+            return;
+        }
+        try
+        {
+            int port = Integer.parseInt(portEnv.trim());
+            HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
+            server.createContext("/", exchange ->
+            {
+                byte[] body = "OK".getBytes();
+                exchange.sendResponseHeaders(200, body.length);
+                exchange.getResponseBody().write(body);
+                exchange.getResponseBody().close();
+            });
+            server.setExecutor(null);
+            server.start();
+            LOG.info("Keep-alive HTTP server listening on 0.0.0.0:{}", port);
+        }
+        catch (IOException | NumberFormatException e)
+        {
+            LOG.warn("Could not start keep-alive HTTP server on PORT={}: {}", portEnv, e.getMessage());
+        }
+    }
+
     private static void startBot()
     {
+        // Render (and similar PaaS) requires the container to bind an HTTP port,
+        // or it never marks the service as live. This is a no-op locally: it only
+        // starts when Render provides a PORT environment variable.
+        startRenderKeepAlivePort();
+
         // Create user interaction handler for startup
         UserInteraction userInteraction = new Prompt("JMusicBot");
         
