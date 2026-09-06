@@ -84,7 +84,6 @@ RUN apt-get update && \
 # Create non-root user and application directories in single layer
 RUN groupadd --gid 10001 jmusicbot && \
     useradd --uid 10001 --gid 10001 --shell /bin/false jmusicbot && \
-    usermod -a -G 1000 jmusicbot && \
     mkdir -p /app /musicbot && \
     chown -R jmusicbot:jmusicbot /app /musicbot
 
