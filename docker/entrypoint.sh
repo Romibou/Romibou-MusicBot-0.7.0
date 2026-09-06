@@ -7,10 +7,17 @@ set -eu
 # UptimeRobot pinging the Render URL every 5 min) keeps the bot alive
 # without needing any changes to the Java code.
 PORT="${PORT:-10000}"
-( socat TCP-LISTEN:"$PORT",fork,reuseaddr \
+socat TCP-LISTEN:"$PORT",bind=0.0.0.0,fork,reuseaddr \
     SYSTEM:'printf "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK"' \
-    >/dev/null 2>&1 & )
-echo "[INFO] HTTP keep-alive responder listening on port $PORT"
+    >/tmp/socat.log 2>&1 &
+SOCAT_PID=$!
+sleep 1
+if kill -0 "$SOCAT_PID" 2>/dev/null; then
+  echo "[INFO] HTTP keep-alive responder running (pid $SOCAT_PID) on 0.0.0.0:$PORT"
+else
+  echo "[WARN] HTTP keep-alive responder failed to start, see below:"
+  cat /tmp/socat.log 2>/dev/null || echo "[WARN] (no socat log output)"
+fi
 # -------------------------------------------------------------------------
 
 JAR="/app/app.jar"
