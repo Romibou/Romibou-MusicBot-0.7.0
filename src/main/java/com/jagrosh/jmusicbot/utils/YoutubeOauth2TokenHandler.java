@@ -55,14 +55,6 @@ public class YoutubeOauth2TokenHandler extends TurboFilter {
             {
                 Files.writeString(OtherUtil.getPath("youtubetoken.txt"), refreshToken);
             }
-
-    /** Returns the newly issued token once, so the owner can store it on Render. */
-    public String takeRefreshToken()
-    {
-        String token = refreshToken;
-        refreshToken = null;
-        return token;
-    }
             catch (Exception e)
             {
                 LOGGER.error(
@@ -74,6 +66,14 @@ public class YoutubeOauth2TokenHandler extends TurboFilter {
         }
 
         return FilterReply.NEUTRAL;
+    }
+
+    /** Returns the newly issued token once, so the owner can store it on Render. */
+    public String takeRefreshToken()
+    {
+        String token = refreshToken;
+        refreshToken = null;
+        return token;
     }
 
     public static class Data
