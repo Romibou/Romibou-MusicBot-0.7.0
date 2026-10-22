@@ -319,14 +319,28 @@ public enum AudioSource
         
         try
         {
-            // Call useOauth2 with null token to trigger the device flow.
-            // When token is null, this initiates the OAuth device code flow which
-            // logs the authorization URL and code that YoutubeOauth2TokenHandler captures.
             yt.useOauth2(token, false);
         }
         catch (Exception e)
         {
-            logger.warn("Failed to authorise with YouTube. If this issue persists, delete the youtubetoken.txt file to reauthorise.", e);
+            // A refresh token is revoked/expired occasionally.  Keeping it makes
+            // youtube-source retry the same HTTP 400 on every startup, and never
+            // gives the user a chance to authorize again.
+            if (token != null)
+            {
+                try
+                {
+                    Files.deleteIfExists(OtherUtil.getPath("youtubetoken.txt"));
+                    logger.warn("YouTube OAuth2 refresh token was rejected; starting a new device authorization flow.");
+                    yt.useOauth2(null, false);
+                    return;
+                }
+                catch (Exception retryException)
+                {
+                    logger.warn("Failed to restart YouTube OAuth2 device authorization flow.", retryException);
+                }
+            }
+            logger.warn("Failed to authorise with YouTube. Authorize again using the URL/code shown in the logs.", e);
         }
     }
     
@@ -339,7 +353,8 @@ public enum AudioSource
     {
         try
         {
-            return Files.readString(OtherUtil.getPath("youtubetoken.txt"));
+            String token = Files.readString(OtherUtil.getPath("youtubetoken.txt")).trim();
+            return token.isEmpty() ? null : token;
         }
         catch (NoSuchFileException e)
         {
