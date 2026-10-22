@@ -66,7 +66,9 @@ public class PlaySlashCmd extends MusicSlashCommand
 
         if(isUrlOrPath(input))
         {
-            event.replyChoices(new Command.Choice(input, input)).queue();
+            // Discord limits autocomplete choice names to 100 characters.
+            // Keep the complete URL as the value sent to the command.
+            event.replyChoices(new Command.Choice(truncateTitle(input), input)).queue();
             return;
         }
 
