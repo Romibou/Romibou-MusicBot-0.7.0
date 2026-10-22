@@ -72,34 +72,10 @@ public class PlaySlashCmd extends MusicSlashCommand
             return;
         }
 
-        bot.getPlayerManager().loadItemOrdered(event.getGuild(), "ytsearch:" + input,
-                bot.getAudioLoadWrapper().wrap("ytsearch:" + input, new AudioLoadResultHandler()
-        {
-            @Override
-            public void trackLoaded(AudioTrack track)
-            {
-                String title = track.getInfo().title;
-                event.replyChoices(new Command.Choice(truncateTitle(title), track.getInfo().uri)).queue();
-            }
-
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist)
-            {
-                event.replyChoices(buildChoicesFromPlaylist(playlist)).queue();
-            }
-
-            @Override
-            public void noMatches()
-            {
-                event.replyChoices().queue();
-            }
-
-            @Override
-            public void loadFailed(FriendlyException exception)
-            {
-                event.replyChoices().queue();
-            }
-        }));
+        // Autocomplete interactions expire after three seconds. Do not perform
+        // a network search before acknowledging the interaction; the actual
+        // YouTube search is performed by the play command after submission.
+        event.replyChoices(new Command.Choice(truncateTitle(input), input)).queue();
     }
 
     /**
