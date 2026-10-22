@@ -18,6 +18,7 @@ import java.nio.file.Files;
 public class YoutubeOauth2TokenHandler extends TurboFilter {
     public final static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(YoutubeOauth2TokenHandler.class);
     private Data data;
+    private volatile String refreshToken;
 
 
     public void init()
@@ -44,6 +45,7 @@ public class YoutubeOauth2TokenHandler extends TurboFilter {
         }
         if (format.equals("OAUTH INTEGRATION: Token retrieved successfully. Store your refresh token as this can be reused. ({})"))
         {
+            refreshToken = params[0].toString().trim();
             LOGGER.info(
                 "Authorization successful & retrieved token! Storing the token in {}",
                 OtherUtil.getPath("youtubetoken.txt").toAbsolutePath()
@@ -51,8 +53,16 @@ public class YoutubeOauth2TokenHandler extends TurboFilter {
 
             try
             {
-                Files.write(OtherUtil.getPath("youtubetoken.txt"), params[0].toString().getBytes());
+                Files.writeString(OtherUtil.getPath("youtubetoken.txt"), refreshToken);
             }
+
+    /** Returns the newly issued token once, so the owner can store it on Render. */
+    public String takeRefreshToken()
+    {
+        String token = refreshToken;
+        refreshToken = null;
+        return token;
+    }
             catch (Exception e)
             {
                 LOGGER.error(
