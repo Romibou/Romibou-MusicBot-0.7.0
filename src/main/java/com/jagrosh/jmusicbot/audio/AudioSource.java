@@ -351,6 +351,12 @@ public enum AudioSource
      */
     private static String readOAuthToken(Logger logger)
     {
+        String environmentToken = System.getenv("YOUTUBE_OAUTH_REFRESH_TOKEN");
+        if (environmentToken != null && !environmentToken.isBlank())
+        {
+            return environmentToken.trim();
+        }
+
         try
         {
             String token = Files.readString(OtherUtil.getPath("youtubetoken.txt")).trim();
