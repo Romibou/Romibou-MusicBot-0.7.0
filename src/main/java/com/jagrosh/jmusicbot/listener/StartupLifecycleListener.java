@@ -105,6 +105,18 @@ public class StartupLifecycleListener extends ListenerAdapter {
                 } catch (Exception ignored) {
                 }
             }
+
+            // Render's free service has no shell or persistent disk. Deliver the
+            // freshly issued token once by DM so it can be stored as an env var.
+            bot.getThreadpool().scheduleWithFixedDelay(() -> {
+                String token = bot.getYouTubeOauth2Handler().takeRefreshToken();
+                if (token == null) return;
+                try {
+                    PrivateChannel channel = bot.getJDA().openPrivateChannelById(bot.getConfig().getOwnerId()).complete();
+                    channel.sendMessage("YouTube OAuth2 refresh token (store it as Render variable YOUTUBE_OAUTH_REFRESH_TOKEN, then remove this temporary code):\n||" + token + "||").complete();
+                } catch (Exception ignored) {
+                }
+            }, 5, 5, TimeUnit.SECONDS);
         }
     }
 
