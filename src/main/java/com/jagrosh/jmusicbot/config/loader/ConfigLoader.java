@@ -47,7 +47,9 @@ public class ConfigLoader {
             return ConfigFactory.empty();
         }
         try {
-            return ConfigFactory.parseFile(configPath.toFile());
+            // Resolve substitutions here so values such as ${DISCORD_TOKEN} can come from
+            // environment variables (e.g. on Render) instead of being stored in config.txt.
+            return ConfigFactory.parseFile(configPath.toFile()).resolve();
         } catch (ConfigException.Parse e) {
             LOGGER.error("Failed to parse config file at {}: {}", configPath, e.getMessage());
             throw e;
