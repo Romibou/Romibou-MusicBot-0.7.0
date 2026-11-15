@@ -109,6 +109,10 @@ COPY --chown=jmusicbot:jmusicbot --chmod=755 docker/warp-proxy.sh /app/warp-prox
 # Copy config.txt (env-var placeholders only, no secrets) into the working directory
 COPY --chown=jmusicbot:jmusicbot config.txt /musicbot/config.txt
 
+# Playlists (one .txt per playlist): Render's disk is reset on every deploy,
+# so playlists live in the repository and are baked into the image.
+COPY --chown=jmusicbot:jmusicbot Playlists /musicbot/Playlists
+
 WORKDIR /musicbot
 
 # Switch to non-root user for security

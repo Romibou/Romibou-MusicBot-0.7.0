@@ -38,7 +38,7 @@ serversettings.json
 *.json
 
 # Playlists and user data
-Playlists/
+# Playlists/ is copied into the image (see Dockerfile)
 playlists/
 
 # Scripts (not needed in image, except entrypoint)
