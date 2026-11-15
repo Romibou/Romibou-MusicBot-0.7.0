@@ -33,6 +33,7 @@ import com.sedmelluq.discord.lavaplayer.source.nico.NicoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import dev.lavalink.youtube.YoutubeSourceOptions;
 import dev.lavalink.youtube.clients.ClientOptions;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jagrosh.jmusicbot.BotConfig;
 import com.jagrosh.jmusicbot.utils.OtherUtil;
+import com.jagrosh.jmusicbot.utils.ProxyUtil;
 
 /**
  * Enum representing available audio sources that can be listed in the config file.
@@ -248,6 +250,17 @@ public enum AudioSource
                         .setConnectionRequestTimeout(YOUTUBE_HTTP_TIMEOUT_MS)
                         .setSocketTimeout(YOUTUBE_HTTP_TIMEOUT_MS)
                         .build());
+
+        // YoutubeAudioSourceManager does not implement HttpConfigurable, so the proxy that
+        // PlayerManager sets with setHttpBuilderConfigurator never reaches it: apply it to the
+        // source's own HTTP client (API, OAuth and stream requests all go through it).
+        if (config.proxyLavaplayer() && config.hasProxy())
+        {
+            HttpHost proxy = ProxyUtil.createApacheProxy(config);
+            yt.getHttpInterfaceManager().configureBuilder(builder -> builder.setProxy(proxy));
+            logger.info("YouTube source configured to use proxy: {}:{}",
+                    config.getProxyHost(), config.getProxyPort());
+        }
 
         if (useOauth)
         {
