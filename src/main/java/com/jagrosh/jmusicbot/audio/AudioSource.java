@@ -33,6 +33,7 @@ import com.sedmelluq.discord.lavaplayer.source.nico.NicoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import org.apache.http.client.config.RequestConfig;
 import dev.lavalink.youtube.YoutubeSourceOptions;
 import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.clients.MWebWithThumbnail;
@@ -219,6 +220,8 @@ public enum AudioSource
         registrationAction.accept(manager, config);
     }
     
+    private static final int YOUTUBE_HTTP_TIMEOUT_MS = 12000;
+
     /**
      * Sets up and configures a YouTube audio source manager.
      * 
@@ -235,6 +238,16 @@ public enum AudioSource
 
         YoutubeAudioSourceManager yt = new YoutubeAudioSourceManager(options, clients);
         yt.setPlaylistPageCount(config.getMaxYTPlaylistPages());
+
+        // LavaPlayer's default 3 s connect/read timeouts are too short on a small hosted
+        // instance: YouTube and the remote cipher server regularly answer more slowly,
+        // which fails every client with "Read timed out".
+        yt.getHttpInterfaceManager().configureRequests(requestConfig ->
+                RequestConfig.copy(requestConfig)
+                        .setConnectTimeout(YOUTUBE_HTTP_TIMEOUT_MS)
+                        .setConnectionRequestTimeout(YOUTUBE_HTTP_TIMEOUT_MS)
+                        .setSocketTimeout(YOUTUBE_HTTP_TIMEOUT_MS)
+                        .build());
 
         if (useOauth)
         {

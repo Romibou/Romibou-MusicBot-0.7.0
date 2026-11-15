@@ -18,9 +18,15 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PlaySlashCmd extends MusicSlashCommand
 {
+    /** Discord drops an autocomplete interaction after 3 seconds. */
+    private static final long AUTOCOMPLETE_TIMEOUT_MS = 2200;
+
     private final String loadingEmoji;
     private final MusicService musicService;
 
@@ -72,10 +78,55 @@ public class PlaySlashCmd extends MusicSlashCommand
             return;
         }
 
-        // Autocomplete interactions expire after three seconds. Do not perform
-        // a network search before acknowledging the interaction; the actual
-        // YouTube search is performed by the play command after submission.
-        event.replyChoices(new Command.Choice(truncateTitle(input), input)).queue();
+        // Autocomplete interactions expire after three seconds. Search YouTube for
+        // suggestions, but answer with the raw input if the search is too slow,
+        // so the interaction never expires.
+        final Command.Choice fallback = new Command.Choice(truncateTitle(input), input);
+        final AtomicBoolean replied = new AtomicBoolean(false);
+        final ScheduledFuture<?> timer = bot.getThreadpool().schedule(() ->
+        {
+            if(replied.compareAndSet(false, true))
+                event.replyChoices(fallback).queue(s -> {}, e -> {});
+        }, AUTOCOMPLETE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        // Not ordered by guild: suggestions must never queue in front of real /play loads.
+        bot.getPlayerManager().loadItem("ytsearch:" + input, new AudioLoadResultHandler()
+        {
+            private void reply(List<Command.Choice> choices)
+            {
+                if(replied.compareAndSet(false, true))
+                {
+                    timer.cancel(false);
+                    event.replyChoices(choices).queue(s -> {}, e -> {});
+                }
+            }
+
+            @Override
+            public void trackLoaded(AudioTrack track)
+            {
+                reply(Collections.singletonList(
+                        new Command.Choice(truncateTitle(track.getInfo().title), track.getInfo().uri)));
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist)
+            {
+                List<Command.Choice> choices = buildChoicesFromPlaylist(playlist);
+                reply(choices.isEmpty() ? Collections.singletonList(fallback) : choices);
+            }
+
+            @Override
+            public void noMatches()
+            {
+                reply(Collections.singletonList(fallback));
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception)
+            {
+                reply(Collections.singletonList(fallback));
+            }
+        });
     }
 
     /**
