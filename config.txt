@@ -52,6 +52,7 @@ playback {
     # When enabled, a code is printed in console/DM'd to the owner for https://www.google.com/device
     # Only needs to be done once (refresh token persists unless changed).
     useOAuth = true
+    useOAuth = ${?YOUTUBE_USE_OAUTH}
   }
 
   # Audio sources toggles.

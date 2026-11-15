@@ -41,7 +41,8 @@ while [ "$i" -lt 30 ]; do
   if trace=$(curl -fsS --max-time 5 -x "http://127.0.0.1:$PORT" "$TRACE_URL" 2>/dev/null); then
     warp=$(echo "$trace" | sed -n 's/^warp=//p')
     colo=$(echo "$trace" | sed -n 's/^colo=//p')
-    echo "[WARP] Proxy up after ${i}s (warp=$warp, colo=$colo)"
+    ip=$(echo "$trace" | sed -n 's/^ip=//p')
+    echo "[WARP] Proxy up after ${i}s (warp=$warp, colo=$colo, ip=$ip)"
     [ "$warp" = "on" ] || [ "$warp" = "plus" ] || { echo "[WARP] Traffic is not going through WARP"; exit 1; }
     exit 0
   fi
