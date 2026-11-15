@@ -249,17 +249,21 @@ proxy {
   # -Dhttps.proxyPort=<proxy-port>
   
   # Proxy server hostname (e.g., "127.0.0.1" or "proxy.example.com")
+  # On Render, docker/entrypoint.sh sets PROXY_HOST/PROXY_PORT once the
+  # Cloudflare WARP proxy is up; without them the bot runs without proxy.
   host = ""
-  
+  host = ${?PROXY_HOST}
+
   # Proxy server port (e.g., 8080, 18080)
   port = 0
-  
+  port = ${?PROXY_PORT}
+
   # Which components should route through the proxy.
   # Practical use case: enable only lavaplayer to proxy audio streams
   # while letting Discord API and other traffic go through normally.
   
   # Route Lavaplayer audio source requests through proxy (YouTube, SoundCloud, etc.)
-  lavaplayer = false
+  lavaplayer = true
   
   # Route JDA Discord API traffic through proxy
   jda = false

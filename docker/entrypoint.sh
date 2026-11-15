@@ -20,6 +20,21 @@ else
 fi
 echo "[INFO] ========================================"
 
+# Route YouTube/SoundCloud requests through Cloudflare WARP (free) because
+# YouTube blocks the hosting provider's datacenter IP (HTTP 403).
+# config.txt reads PROXY_HOST/PROXY_PORT; when they are unset the bot runs
+# without proxy. Set WARP_ENABLED=false to disable.
+if [ "${WARP_ENABLED:-true}" = "true" ]; then
+  if /app/warp-proxy.sh; then
+    PROXY_HOST="127.0.0.1"
+    PROXY_PORT="${WARP_PROXY_PORT:-8118}"
+    export PROXY_HOST PROXY_PORT
+    echo "[INFO] Audio sources will use the WARP proxy at $PROXY_HOST:$PROXY_PORT"
+  else
+    echo "[WARN] WARP proxy unavailable, starting without proxy"
+  fi
+fi
+
 # Default JVM options for optimal audio performance (ZGC with sub-ms pauses)
 # Set JAVA_OPTS to override; add -Xms/-Xmx for heap limits if desired
 : "${JAVA_OPTS:=-XX:+UseZGC -XX:+AlwaysPreTouch}"

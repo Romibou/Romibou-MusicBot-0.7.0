@@ -75,6 +75,24 @@ ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 COPY --from=jre-builder /javaruntime $JAVA_HOME
 
+# Cloudflare WARP tools (see docker/warp-proxy.sh): wgcf registers a free WARP
+# device, wireproxy exposes the WireGuard tunnel as a local HTTP proxy.
+# Pinned versions, verified against the SHA-256 published on their GitHub releases.
+ARG WGCF_VERSION=2.3.1
+ARG WGCF_SHA256=4fb7a136aa470ece11d17949c7db07b040ec9c604742dc8680bcf1889f85d0c8
+ARG WIREPROXY_VERSION=1.1.3
+ARG WIREPROXY_SHA256=e88c1d090740373fc606c1bafd81d9a5eadc642cce5667616e20e9d7a444f51c
+RUN install_packages curl ca-certificates && \
+    curl -fsSL -o /usr/local/bin/wgcf \
+      "https://github.com/ViRb3/wgcf/releases/download/v${WGCF_VERSION}/wgcf_${WGCF_VERSION}_linux_amd64" && \
+    echo "${WGCF_SHA256}  /usr/local/bin/wgcf" | sha256sum -c - && \
+    curl -fsSL -o /tmp/wireproxy.tar.gz \
+      "https://github.com/windtf/wireproxy/releases/download/v${WIREPROXY_VERSION}/wireproxy_linux_amd64.tar.gz" && \
+    echo "${WIREPROXY_SHA256}  /tmp/wireproxy.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/wireproxy.tar.gz -C /usr/local/bin wireproxy && \
+    rm /tmp/wireproxy.tar.gz && \
+    chmod 755 /usr/local/bin/wgcf /usr/local/bin/wireproxy
+
 # Create non-root user and application directories in single layer
 RUN groupadd --gid 10001 jmusicbot && \
     useradd --uid 10001 --gid 10001 --shell /bin/false jmusicbot && \
@@ -86,6 +104,7 @@ COPY --from=builder --chown=jmusicbot:jmusicbot /build/target/JMusicBot-*-All.ja
 
 # Copy and set permissions for entrypoint script
 COPY --chown=jmusicbot:jmusicbot --chmod=755 docker/entrypoint.sh /app/entrypoint.sh
+COPY --chown=jmusicbot:jmusicbot --chmod=755 docker/warp-proxy.sh /app/warp-proxy.sh
 
 # Copy config.txt (env-var placeholders only, no secrets) into the working directory
 COPY --chown=jmusicbot:jmusicbot config.txt /musicbot/config.txt
